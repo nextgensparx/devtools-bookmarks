@@ -29,7 +29,7 @@ export default {
   },
   methods: {
     addBookmark() {
-      this.$emit('addBookmark', this.file, this.lineNumber);
+      this.$emit('addBookmark', this.title, this.file, this.lineNumber);
     },
     addFolder() {
       this.$emit('addFolder', this.title);
