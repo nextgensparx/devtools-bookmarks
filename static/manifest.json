@@ -1,0 +1,11 @@
+{
+    "manifest_version": 2,
+    "name": "DevTools Bookmarks",
+    "short_name": "DevToolsBookmarks",
+    "description": "Adds a bookmarks panel to the chrome DevTools",
+    "author": "Sipho Mateke",
+    "version": "0.0.1",
+    "default_locale": "en",
+    "minimum_chrome_version": "10.0",
+    "devtools_page": "./devtools.html"
+}

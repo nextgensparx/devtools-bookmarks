@@ -1,0 +1,36 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "google"
+  ],
+  "env": {
+    "browser": true,
+    "node": true,
+    "jquery": true
+  },
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaVersion": 2017
+  },
+  "plugins": [
+    "vue",
+    "html"
+  ],
+  "rules": {
+    "indent": [
+      "error",
+      2
+    ],
+    "linebreak-style": [
+      "error"
+    ],
+    "quotes": [
+      "error",
+      "single"
+    ],
+    "semi": [
+      "error",
+      "always"
+    ]
+  }
+}
