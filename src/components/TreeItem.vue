@@ -6,7 +6,7 @@
   @focus="focus"
   @blur="blur"
   :class="{
-    'has-children': model.children && model.children.length > 0,
+    'has-children': hasChildren,
     'selected': selected,
     'focused': focused,
     'open': open,
@@ -19,7 +19,7 @@
     </div>
     <!--Folder or file icon-->
     <span class="icon-wrapper" v-if="model.type">
-      <i class="material-icons md-18">{{ model.type === 'folder' ? 'folder' : 'insert_drive_file' }}</i>
+      <i class="material-icons md-18">{{ isFolder ? 'folder' : 'bookmark' }}</i>
     </span>
     <span class="tree-item-title">{{ model.title }} {{ model.link }}</span>
   </li>
@@ -34,6 +34,7 @@
 </template>
 
 <script>
+import Vue from 'vue';
 import {bus} from '@/Bus';
 export default {
   name: 'tree-item',
@@ -51,8 +52,36 @@ export default {
     bus.$on('deselect-all', () => {
       this.deselect();
     });
+    if (this.isFolder) {
+      Vue.set(this.model, 'children', []);
+    }
+  },
+  computed: {
+    isFolder() {
+      return this.model.type === 'folder';
+    },
+    hasChildren() {
+      return this.model.children && this.model.children.length;
+    },
   },
   methods: {
+    addNode(node) {
+      this.model.children.push(node);
+      if (!this.open) {
+        this.open = true;
+      }
+    },
+    addBookmark(bookmark) {
+      if (this.isFolder) {
+        this.addNode(bookmark);
+        console.log(this.model);
+      }
+    },
+    addFolder(folder) {
+      if (this.isFolder) {
+        this.addNode(folder);
+      }
+    },
     deselect() {
       this.selected = false;
       this.$refs.item.setAttribute('tabindex', null);
@@ -76,6 +105,9 @@ export default {
     toggle() {
       this.open = !this.open;
     },
+    collapseOrAscend() {
+
+    },
   },
 };
 </script>
@@ -89,6 +121,7 @@ export default {
   }
 
   li.tree-item{
+    cursor: pointer;
     text-overflow: ellipsis;
     white-space: nowrap;
     position: relative;
@@ -115,7 +148,7 @@ export default {
       }
 
       &.open .dropdown-icon .material-icons{
-        transform: rotate(-45deg);
+        transform: rotate(0deg);
       }
     }
 
