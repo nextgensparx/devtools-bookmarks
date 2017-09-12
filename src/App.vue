@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <toolbar @addBookmark="addBookmark" @addFolder="addFolder"></toolbar>
     <ol class="tree" role="tree" @keydown="keydown">
       <tree-item :model="root"></tree-item>
     </ol>
@@ -9,25 +10,23 @@
 <script>
 import {bus} from '@/Bus';
 import TreeItem from '@/components/TreeItem';
+import Toolbar from '@/components/Toolbar';
 
 export default {
   name: 'app',
   components: {
     'tree-item': TreeItem,
+    'toolbar': Toolbar,
   },
   data() {
     return {
+      lastId: 0,
       selectedTreeElement: null,
       root: {
         id: 0,
         title: 'Root',
         type: 'folder',
-        children: [
-          {id: 1, title: 'Main', type: 'bookmark', bookmark: {link: 'background.js'}},
-          {id: 2, title: 'Resources', type: 'folder', children: [
-            {id: 3, title: 'Image', type: 'bookmark', bookmark: {link: 'image.png'}},
-          ]},
-        ],
+        children: [],
       },
     };
   },
@@ -37,11 +36,21 @@ export default {
     });
   },
   methods: {
+    addBookmark(file, lineNumber) {
+      this.selectedTreeElement.addBookmark({id: this.lastId++, title: file, type: 'bookmark'});
+    },
+    addFolder(title) {
+      this.selectedTreeElement.addFolder({id: this.lastId++, title: title, type: 'folder'});
+      console.log(JSON.parse(JSON.stringify(this.root)));
+    },
+    selectPrevious() {
+
+    },
     selectNext() {
 
     },
-    keydown() {
-      /* if (!this.selectedTreeElement || event.target !== this.selectedTreeElement.listItemElement || event.shiftKey || event.metaKey || event.ctrlKey) {
+    keydown(event) {
+      if (!this.selectedTreeElement || event.target !== this.selectedTreeElement.listItemElement || event.shiftKey || event.metaKey || event.ctrlKey) {
         return;
       }
       let handled = false;
@@ -64,7 +73,7 @@ export default {
         handled = this.selectedTreeElement.onenter();
       } else if (event.keyCode === UI.KeyboardShortcut.Keys.Space.code) {
         handled = this.selectedTreeElement.onspace();
-      }*/
+      }
     },
   },
 };
@@ -79,7 +88,6 @@ body{
   font-size: 12px;
   color: #222;
   font-family: 'Segoe UI', Tahoma, sans-serif;
-  overflow-y: scroll;
   -webkit-user-select: none;
   tab-size: 4;
   cursor: default;
@@ -109,11 +117,4 @@ body{
   list-style-type: none;
 }
 
-.bookmark{
-  cursor: pointer;
-}
-
-.bookmark:hover{
-  background-color: rgba(56, 121, 217, 0.1);
-}
 </style>
