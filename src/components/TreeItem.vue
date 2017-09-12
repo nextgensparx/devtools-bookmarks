@@ -1,11 +1,11 @@
 <template>
-<div>
+<div class="tree-item-wrapper">
   <li role="treeitem" class="tree-item"
-  ref="item"
-  @click="click"
-  @focus="focus"
-  @blur="blur"
-  :class="{
+    ref="item"
+    @click="click"
+    @focus="focus"
+    @blur="blur"
+    :class="{
     'has-children': hasChildren,
     'selected': selected,
     'focused': focused,
@@ -39,7 +39,37 @@ import {bus} from '@/Bus';
 export default {
   name: 'tree-item',
   props: {
-    'model': Object,
+    'model': {
+      type: Object,
+      validator: function(m) {
+        if (!('id' in m)) {
+          console.error('Invalid model: an id is required');
+          return false;
+        }
+        if (typeof m.id !== 'number') {
+          console.error('Invalid model: id provided must be numeric');
+          return false;
+        }
+        if ('title' in m && typeof m.title !== 'string') {
+          console.error('Invalid model: title must be string');
+          return false;
+        }
+        if ('type' in m && typeof m.type !== 'string') {
+          console.error('Invalid model: type must be string');
+          return false;
+        }
+        let types = ['folder', 'bookmark'];
+        if (!(types.includes(m.type))) {
+          console.error('Invalid model: type must be one of the following: '+types.join(', ')+' found '+m.type);
+          return false;
+        }
+        if ('children' in m && !Array.isArray(m.children)) {
+          console.error('Invalid model: children must be array');
+          return false;
+        }
+        return true;
+      },
+    },
   },
   data() {
     return {
@@ -74,7 +104,6 @@ export default {
     addBookmark(bookmark) {
       if (this.isFolder) {
         this.addNode(bookmark);
-        console.log(this.model);
       }
     },
     addFolder(folder) {
@@ -121,7 +150,6 @@ export default {
   }
 
   li.tree-item{
-    cursor: pointer;
     text-overflow: ellipsis;
     white-space: nowrap;
     position: relative;
