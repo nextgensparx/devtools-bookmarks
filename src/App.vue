@@ -1,13 +1,16 @@
 <template>
   <div id="app">
-    <toolbar @addBookmark="addBookmark" @addFolder="addFolder"></toolbar>
-    <ol class="tree" role="tree" @keydown="keydown">
-      <tree-item :model="root"></tree-item>
-    </ol>
+    <div v-if="!loading">
+      <toolbar v-if="isPanel" @addBookmark="addBookmark" @addFolder="addFolder"></toolbar>
+      <ol class="tree" role="tree" @keydown="keydown">
+        <tree-item :model="tree"></tree-item>
+      </ol>
+    </div>
   </div>
 </template>
 
 <script>
+/* global chrome */
 import {bus} from '@/Bus';
 import TreeItem from '@/components/TreeItem';
 import Toolbar from '@/components/Toolbar';
@@ -20,9 +23,11 @@ export default {
   },
   data() {
     return {
+      loading: true,
+      isPanel: null,
       lastId: 0,
       selectedTreeElement: null,
-      root: {
+      tree: {
         id: 0,
         title: 'Root',
         type: 'folder',
@@ -31,9 +36,29 @@ export default {
     };
   },
   mounted() {
+    window.addEventListener('message', (event) => {
+      if (event.data.from === 'devtools-bookmarks' && event.data.type === 'load') {
+        this.isPanel = event.data.isPanel;
+        this.loading = false;
+      }
+    });
+    chrome.storage.sync.get('tree', (data) => {
+      this.tree = data.tree;
+    });
     bus.$on('selected', (item) => {
       this.selectedTreeElement = item;
     });
+  },
+  watch: {
+    tree: {
+      handler: (treeValue) => {
+        let treeJson = JSON.parse(JSON.stringify(treeValue));
+        chrome.storage.sync.set({tree: treeJson}, function() {
+          // TODO: Handle save error
+        });
+      },
+      deep: true,
+    },
   },
   methods: {
     addBookmark(file, lineNumber) {
@@ -41,7 +66,6 @@ export default {
     },
     addFolder(title) {
       this.selectedTreeElement.addFolder({id: this.lastId++, title: title, type: 'folder'});
-      console.log(JSON.parse(JSON.stringify(this.root)));
     },
     selectPrevious() {
 
@@ -50,7 +74,7 @@ export default {
 
     },
     keydown(event) {
-      if (!this.selectedTreeElement || event.target !== this.selectedTreeElement.listItemElement || event.shiftKey || event.metaKey || event.ctrlKey) {
+      /* if (!this.selectedTreeElement || event.target !== this.selectedTreeElement.listItemElement || event.shiftKey || event.metaKey || event.ctrlKey) {
         return;
       }
       let handled = false;
@@ -73,7 +97,7 @@ export default {
         handled = this.selectedTreeElement.onenter();
       } else if (event.keyCode === UI.KeyboardShortcut.Keys.Space.code) {
         handled = this.selectedTreeElement.onspace();
-      }
+      }*/
     },
   },
 };
