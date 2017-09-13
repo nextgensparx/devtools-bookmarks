@@ -1,9 +1,11 @@
 <template>
   <div id="app">
     <div v-if="!loading">
-      <toolbar v-if="isPanel" @addBookmark="addBookmark" @addFolder="addFolder"></toolbar>
-      <ol class="tree" role="tree" @keydown="keydown">
-        <tree-item :model="tree"></tree-item>
+      <toolbar v-if="isPanel" @addBookmark="addBookmark"></toolbar>
+      <ol class="tree" role="tree">
+        <bookmark v-for="bookmark in bookmarks"
+         :key="bookmark.id"
+         :model="bookmark"></bookmark>
       </ol>
     </div>
   </div>
@@ -11,14 +13,13 @@
 
 <script>
 /* global chrome */
-import {bus} from '@/Bus';
-import TreeItem from '@/components/TreeItem';
-import Toolbar from '@/components/Toolbar';
+import Bookmark from '@/components/Bookmark.vue';
+import Toolbar from '@/components/Toolbar.vue';
 
 export default {
   name: 'app',
   components: {
-    'tree-item': TreeItem,
+    'bookmark': Bookmark,
     'toolbar': Toolbar,
   },
   data() {
@@ -26,13 +27,7 @@ export default {
       loading: true,
       isPanel: null,
       lastId: 0,
-      selectedTreeElement: null,
-      tree: {
-        id: 0,
-        title: 'Root',
-        type: 'folder',
-        children: [],
-      },
+      bookmarks: [],
     };
   },
   mounted() {
@@ -42,18 +37,17 @@ export default {
         this.loading = false;
       }
     });
-    chrome.storage.sync.get('tree', (data) => {
-      this.tree = data.tree;
-    });
-    bus.$on('selected', (item) => {
-      this.selectedTreeElement = item;
+    chrome.storage.sync.get('bookmarks', (data) => {
+      if (data.bookmarks) {
+        this.bookmarks = data.bookmarks;
+      }
     });
   },
   watch: {
-    tree: {
-      handler: (treeValue) => {
-        let treeJson = JSON.parse(JSON.stringify(treeValue));
-        chrome.storage.sync.set({tree: treeJson}, function() {
+    bookmarks: {
+      handler: (value) => {
+        let json = JSON.parse(JSON.stringify(value));
+        chrome.storage.sync.set({bookmarks: json}, function() {
           // TODO: Handle save error
         });
       },
@@ -61,43 +55,8 @@ export default {
     },
   },
   methods: {
-    addBookmark(file, lineNumber) {
-      this.selectedTreeElement.addBookmark({id: this.lastId++, title: file, type: 'bookmark'});
-    },
-    addFolder(title) {
-      this.selectedTreeElement.addFolder({id: this.lastId++, title: title, type: 'folder'});
-    },
-    selectPrevious() {
-
-    },
-    selectNext() {
-
-    },
-    keydown(event) {
-      /* if (!this.selectedTreeElement || event.target !== this.selectedTreeElement.listItemElement || event.shiftKey || event.metaKey || event.ctrlKey) {
-        return;
-      }
-      let handled = false;
-      if (event.key === 'ArrowUp' && !event.altKey) {
-        handled = this.selectPrevious();
-      } else if (event.key === 'ArrowDown' && !event.altKey) {
-        handled = this.selectNext();
-      } else if (event.key === 'ArrowLeft') {
-        handled = this.selectedTreeElement.collapseOrAscend(event.altKey);
-      } else if (event.key === 'ArrowRight') {
-        if (!this.selectedTreeElement.revealed()) {
-          this.selectedTreeElement.reveal();
-          handled = true;
-        } else {
-          handled = this.selectedTreeElement.descendOrExpand(event.altKey);
-        }
-      } else if (event.keyCode === 8 || event.keyCode === 46) {
-        handled = this.selectedTreeElement.ondelete();
-      } else if (isEnterKey(event)) {
-        handled = this.selectedTreeElement.onenter();
-      } else if (event.keyCode === UI.KeyboardShortcut.Keys.Space.code) {
-        handled = this.selectedTreeElement.onspace();
-      }*/
+    addBookmark(name, file, lineNumber) {
+      this.bookmarks.push({id: this.lastId++, name, file, lineNumber});
     },
   },
 };

@@ -1,19 +1,19 @@
 <template>
 <div class="toolbar">
-  <div class="toolbar-divider toolbar-item"></div>
+  <div class="toolbar-divider toolbar-item basic"></div>
   <div class="toolbar-item toolbar-input">
     <input v-model="title" type="text" placeholder="Title">
   </div>
-  <div class="toolbar-divider toolbar-item"></div>
+  <div class="toolbar-divider toolbar-item basic"></div>
   <div class="toolbar-item toolbar-input">
     <input v-model="file" type="text" placeholder="File">
   </div>
-  <div class="toolbar-divider toolbar-item"></div>
+  <div class="toolbar-divider toolbar-item basic"></div>
   <div class="toolbar-item toolbar-input">
     <input v-model="lineNumber" type="number" placeholder="Line number">
   </div>
+  <div class="toolbar-divider toolbar-item basic"></div>
   <button class="toolbar-button toolbar-item" @click="addBookmark"><i class="material-icons md-18">add</i></button>
-  <button class="toolbar-button toolbar-item" @click="addFolder"><i class="material-icons md-18">create_new_folder</i></button>
 </div>
 </template>
 
@@ -30,9 +30,6 @@ export default {
   methods: {
     addBookmark() {
       this.$emit('addBookmark', this.title, this.file, this.lineNumber);
-    },
-    addFolder() {
-      this.$emit('addFolder', this.title);
     },
   },
 };
@@ -67,6 +64,10 @@ export default {
       overflow: hidden;
       min-width: 28px;
       background: transparent;
+      &:hover{
+        color: #333;
+        background-color: #e5e5e5;
+      }
     }
 
     .toolbar-input{
@@ -80,6 +81,9 @@ export default {
       width: 1px;
       margin: 5px 4px;
       height: 16px;
+      &.basic{
+        background-color: transparent;
+      }
     }
   }
 </style>
