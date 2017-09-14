@@ -5,9 +5,19 @@
     <input v-model="title" type="text" placeholder="Title">
   </div>
   <div class="toolbar-divider toolbar-item basic"></div>
-  <div class="toolbar-item toolbar-input">
+
+  <div v-if="useResourcesList">
+    <select v-model="file">
+      <option v-for="(resource, key) in resourcesParsed"
+       :key="key"
+       :value="resource.href"
+       :title="resource.href">{{resource.pathname}}</option>
+    </select>
+  </div>
+  <div class="toolbar-item toolbar-input" v-else>
     <input v-model="file" type="text" placeholder="File">
   </div>
+
   <div class="toolbar-divider toolbar-item basic"></div>
   <div class="toolbar-item toolbar-input">
     <input v-model="lineNumber" type="number" placeholder="Line number">
@@ -20,12 +30,27 @@
 <script>
 export default {
   name: 'toolbar',
+  props: {
+    'resources': Array,
+  },
   data() {
     return {
       title: '',
       file: '',
       lineNumber: null,
     };
+  },
+  computed: {
+    useResourcesList() {
+      return this.resources && this.resources.length > 0 && this.resources.length < 30;
+    },
+    resourcesParsed() {
+      let parsed = [];
+      for (let resource of this.resources) {
+        parsed.push(new URL(resource));
+      }
+      return parsed;
+    },
   },
   methods: {
     addBookmark() {
