@@ -1,18 +1,21 @@
 <template>
   <div id="app">
     <div v-if="!loading">
-      <toolbar v-if="isPanel" @addBookmark="addBookmark"></toolbar>
+      <toolbar v-if="isPanel" @addBookmark="addBookmark" :resources="resources"></toolbar>
       <ol class="tree" role="tree">
         <bookmark v-for="bookmark in bookmarks"
          :key="bookmark.id"
-         :model="bookmark"></bookmark>
+         :model="bookmark"
+         :isPanel="isPanel"></bookmark>
       </ol>
+      <span v-if="error" class="error">{{ error }}</span>
     </div>
   </div>
 </template>
 
 <script>
 /* global chrome */
+import Vue from 'vue';
 import Bookmark from '@/components/Bookmark.vue';
 import Toolbar from '@/components/Toolbar.vue';
 
@@ -25,9 +28,11 @@ export default {
   data() {
     return {
       loading: true,
+      error: null,
       isPanel: null,
       lastId: 0,
       bookmarks: [],
+      resources: [],
     };
   },
   mounted() {
@@ -35,12 +40,23 @@ export default {
       if (event.data.from === 'devtools-bookmarks' && event.data.type === 'load') {
         this.isPanel = event.data.isPanel;
         this.loading = false;
+
+        chrome.storage.sync.get('bookmarks', (data) => {
+          if (data.bookmarks) {
+            this.bookmarks = data.bookmarks;
+          }
+          this.refreshBookmarks();
+        });
       }
     });
-    chrome.storage.sync.get('bookmarks', (data) => {
-      if (data.bookmarks) {
-        this.bookmarks = data.bookmarks;
+    chrome.devtools.inspectedWindow.onResourceAdded.addListener((resource) => {
+      if (resource.url.indexOf('debugger') !== 0) {
+        // TODO: Check performance
+        this.refreshBookmarks();
       }
+    });
+    this.bus.$on('delete-node', (id) => {
+      this.removeBookmark(id);
     });
   },
   watch: {
@@ -55,8 +71,31 @@ export default {
     },
   },
   methods: {
-    addBookmark(name, file, lineNumber) {
-      this.bookmarks.push({id: this.lastId++, name, file, lineNumber});
+    refreshBookmarks() {
+      chrome.devtools.inspectedWindow.getResources((resources) => {
+        let resourceUrls = [];
+        for (let resource of resources) {
+          resourceUrls.push(resource.url);
+        }
+        Vue.set(this, 'resources', resourceUrls);
+        for (let bookmark of this.bookmarks) {
+          Vue.set(bookmark, 'enabled', resourceUrls.includes(bookmark.url));
+        }
+      });
+    },
+    addBookmark(name, url, lineNumber) {
+      this.bookmarks.push({id: this.lastId++, name, url, lineNumber});
+      this.refreshBookmarks();
+    },
+    getBookmarkIndex(id) {
+      for (let index in this.bookmarks) {
+        if (this.bookmarks[index].id === id) return index;
+      }
+      return null;
+    },
+    removeBookmark(id) {
+      this.bookmarks.splice(this.getBookmarkIndex(id), 1);
+      this.refreshBookmarks();
     },
   },
 };
