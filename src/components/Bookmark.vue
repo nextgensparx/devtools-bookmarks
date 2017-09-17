@@ -1,19 +1,31 @@
 <template>
-<li class="tree-item" v-if="model.enabled"
+<li class="tree-item"
   @click="click"
-  @dblclick="dblclick"
   @mouseenter="mouseenter"
   @mouseleave="mouseleave"
   :class="{
   'selected': selected,
+  'auto' : model.auto
   }">
   <div class="selection-fill"></div>
   <span class="icon-wrapper">
-    <i class="material-icons md-18">bookmark</i>
+    <i class="material-icons md-18" :class="{auto : model.auto}">bookmark</i>
+    <i class="material-icons md-18" v-if="model.enabled">radio_button_checked</i>
+    <i class="material-icons md-18" v-else>radio_button_unchecked</i>
   </span>
-  <span class="tree-item-name">{{ model.name }}</span>
-  <span class="tree-item-url" v-if="isPanel">&nbsp;- {{ model.url }}</span>
-  <span class="action" v-if="isPanel && hover" @click="deleteNode"><i class="material-icons md-18">delete</i></span>
+  <span @dblclick="dblclick" class="tree-item-text">
+    <span class="tree-item-name">{{ model.name }}</span>
+    <span class="tree-item-url">
+      <template v-if="isPanel">
+        {{ model.url }}
+      </template>
+      <template v-else>
+        {{ model.url.substring(model.url.lastIndexOf('/')+1) }}
+      </template>
+      : {{ model.lineNumber }}
+    </span>
+  </span>
+  <span class="action" v-if="isPanel && !model.auto" @click="deleteNode"><i class="material-icons md-18">delete</i></span>
 </li>
 </template>
 
@@ -94,16 +106,29 @@ export default {
     min-height: 20px;
 
     .action {
+      align-self: right;
       color: #5a5a5a;
-      margin-left: 1em;
+      // margin-left: 1em;
+      margin-left: auto;
       &:hover{
         color: #333;
         background-color: #e5e5e5;
       }
     }
 
-    .tree-item-url{
-      color: #919191;
+    .tree-item-text{
+      display: flex;
+      width: 100%;
+
+      .tree-item-name{
+        margin-right: 1em;
+      }
+
+      .tree-item-url{
+        margin-left: auto;
+        margin-right: 1em;
+        color: #919191;
+      }
     }
 
     .icon-wrapper{
@@ -112,6 +137,9 @@ export default {
       align-items: center;
       padding-right: 4px;
       color: rgba(0, 0, 0, 0.54);
+      .auto {
+        color: #3dc41b;
+      }
     }
 
     .selection-fill {

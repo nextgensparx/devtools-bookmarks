@@ -55,6 +55,10 @@ export default {
         this.refreshBookmarks();
       }
     });
+    chrome.devtools.inspectedWindow.onResourceContentCommitted.addListener((resource) => {
+      // TODO: Check performance
+      this.refreshBookmarks();
+    });
     this.bus.$on('delete-node', (id) => {
       this.removeBookmark(id);
     });
@@ -71,21 +75,73 @@ export default {
     },
   },
   methods: {
-    refreshBookmarks() {
-      chrome.devtools.inspectedWindow.getResources((resources) => {
-        let resourceUrls = [];
-        for (let resource of resources) {
-          resourceUrls.push(resource.url);
-        }
-        Vue.set(this, 'resources', resourceUrls);
-        for (let bookmark of this.bookmarks) {
-          Vue.set(bookmark, 'enabled', resourceUrls.includes(bookmark.url));
-        }
+    findBookmarks(resource) {
+      return new Promise((resolve, reject) => {
+        resource.getContent((content, encoding) => {
+          if (content) {
+            const bookmarks = [];
+            const lines = content.split(/\n/);
+            lines.forEach(function(line, lineNumber) {
+              const captureGroups = line.match(/\/\/(.*)bookmark:(.+)/i, '');
+              if (captureGroups && captureGroups.length > 1) {
+                bookmarks.push({
+                  name: captureGroups[2],
+                  lineNumber,
+                });
+              }
+            });
+            resolve(bookmarks);
+          } else {
+            reject(new Error('resource is empty'));
+          }
+        });
       });
     },
-    addBookmark(name, url, lineNumber) {
-      this.bookmarks.push({id: this.lastId++, name, url, lineNumber});
-      this.refreshBookmarks();
+    refreshBookmarks() {
+      chrome.devtools.inspectedWindow.getResources((resources) => {
+        const resourceUrls = [];
+        const inlineBookmarks = [];
+        let promises = [];
+        for (let resource of resources) {
+          promises.push(this.findBookmarks(resource).then((bookmarks) => {
+            if (bookmarks.length > 0) {
+              inlineBookmarks.push({resource, bookmarks});
+            }
+          }));
+          resourceUrls.push(resource.url);
+        }
+        // Wait for async requests
+        Promise.all(promises).then(() => {
+          for (let inlineBookmark of inlineBookmarks) {
+            for (let bookmark of inlineBookmark.bookmarks) {
+              this.addBookmark(bookmark.name,
+                inlineBookmark.resource.url,
+                bookmark.lineNumber,
+                true);
+            }
+          }
+          Vue.set(this, 'resources', resourceUrls);
+          for (let i=0; i<this.bookmarks.length; i++) {
+            let bookmark = this.bookmarks[i];
+            Vue.set(this.bookmarks[i], 'enabled', resourceUrls.includes(bookmark.url));
+          }
+        });
+      });
+    },
+    addBookmark(name, url, lineNumber, auto) {
+      let exists = false;
+      for (let bookmark of this.bookmarks) {
+        if (bookmark.url === url
+        && bookmark.name === name
+        && bookmark.lineNumber === lineNumber) {
+          exists = true;
+          break;
+        }
+      }
+      if (!exists) {
+        this.bookmarks.push({id: this.lastId++, name, url, lineNumber, auto});
+        this.refreshBookmarks();
+      }
     },
     getBookmarkIndex(id) {
       for (let index in this.bookmarks) {
@@ -111,6 +167,7 @@ body{
   color: #222;
   font-family: 'Segoe UI', Tahoma, sans-serif;
   -webkit-user-select: none;
+  user-select: none;
   tab-size: 4;
   cursor: default;
 }
@@ -132,7 +189,8 @@ body{
 }
 
 .tree{
-  padding: 0 0 4px 4px;
+  /*padding: 0 0 4px 4px;*/
+  padding: 0;
   margin: 0;
   z-index: 0;
   position: relative;
