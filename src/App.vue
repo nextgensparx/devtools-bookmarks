@@ -116,7 +116,7 @@ export default {
             for (let bookmark of inlineBookmark.bookmarks) {
               this.addBookmark(bookmark.name,
                 inlineBookmark.resource.url,
-                bookmark.lineNumber,
+                bookmark.lineNumber + 1,
                 true);
             }
           }

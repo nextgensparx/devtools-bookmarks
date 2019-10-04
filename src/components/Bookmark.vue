@@ -83,7 +83,7 @@ export default {
       this.hover = false;
     },
     dblclick() {
-      chrome.devtools.panels.openResource(this.model.url, parseInt(this.model.lineNumber));
+      chrome.devtools.panels.openResource(this.model.url, parseInt(this.model.lineNumber) - 1);
     },
   },
 };
