@@ -42,7 +42,7 @@ export default {
   },
   computed: {
     useResourcesList() {
-      return this.resources && this.resources.length > 0 && this.resources.length < 30;
+      return this.resources && this.resources.length > 0 && this.resources.length < 100;
     },
     resourcesParsed() {
       let parsed = [];
