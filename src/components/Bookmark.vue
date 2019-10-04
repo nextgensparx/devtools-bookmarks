@@ -1,5 +1,6 @@
 <template>
 <li class="tree-item"
+  v-if="model.enabled"
   @click="click"
   @mouseenter="mouseenter"
   @mouseleave="mouseleave"
@@ -10,8 +11,8 @@
   <div class="selection-fill"></div>
   <span class="icon-wrapper">
     <i class="material-icons md-18" :class="{auto : model.auto}">bookmark</i>
-    <i class="material-icons md-18" v-if="model.enabled">radio_button_checked</i>
-    <i class="material-icons md-18" v-else>radio_button_unchecked</i>
+    <!-- <i class="material-icons md-18" v-if="model.enabled">radio_button_checked</i>
+    <i class="material-icons md-18" v-else>radio_button_unchecked</i> -->
   </span>
   <span @dblclick="dblclick" class="tree-item-text">
     <span class="tree-item-name">{{ model.name }}</span>
